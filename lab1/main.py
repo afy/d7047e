@@ -11,6 +11,7 @@ from nltk.tokenize import word_tokenize
 
 # PREPROCESS
 # load and prepare data
+
 data = pd.read_csv('amazon_cells_labelled.txt', sep='\t', names=['review', 'label'])
 nltk.download('punkt')
 data['tokens'] = data['review'].apply(word_tokenize)
@@ -93,3 +94,7 @@ while True:
         break
     response = chatbot_respone(user_input)
     print(f'The sentiment of the review is: {response}')
+    
+
+
+#CIAO CAZZO
