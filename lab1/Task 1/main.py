@@ -7,12 +7,17 @@ import torch.optim as optim
 from torch.nn.utils.rnn import pack_sequence
 import nltk
 from nltk.tokenize import word_tokenize
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
 
 
 # PREPROCESS
 # load and prepare data
-
 data = pd.read_csv('amazon_cells_labelled.txt', sep='\t', names=['review', 'label'])
+
+# checking how many pos and neg reviews
+review_counts = data['label'].value_counts()
+print(f'Count of reviews by sentiment: {review_counts}')
+
 nltk.download('punkt')
 data['tokens'] = data['review'].apply(word_tokenize)
 
@@ -48,7 +53,7 @@ class TextClassifier(nn.Module):
         embedded = self.embedding(x).mean(dim=1)
         hidden = self.relu(self.fc1(embedded))
         output = self.fc2(hidden)
-        return self.softmax(output)
+        return output
 
 model = TextClassifier(len(vocab)+1, 50, 100, 2)
 
@@ -56,7 +61,7 @@ model = TextClassifier(len(vocab)+1, 50, 100, 2)
 criterion = nn.CrossEntropyLoss()
 optimzier = optim.Adam(model.parameters(), lr=0.001)
 
-for epoch in range(100):
+for epoch in range(30):
     for texts, labels in train_loader:
         optimzier.zero_grad()
         outputs = model(texts)
@@ -66,17 +71,28 @@ for epoch in range(100):
     print(f'Epoch {epoch+1}: Training Loss = {loss.item()}')
 
 # TEST MODEL
+# TEST MODEL
 correct = 0
 total = 0
+predicted = []
+actual = []
 with torch.no_grad():
     for texts, labels in test_loader:
         outputs = model(texts)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
+        _, preds = torch.max(outputs.data, 1)  # Correct variable naming here
 
-accuracy = 100 * correct / total
-print(f'Test accuracy: {accuracy}')
+        # Convert Tensor to list and then extend
+        predicted.extend(preds.tolist())
+        actual.extend(labels.tolist())
+
+print('Test Accuracy:', accuracy_score(actual, predicted)*100)
+print('Classification Report:\n', classification_report(actual, predicted))
+print('Confusion Matrix:\n', confusion_matrix(actual, predicted))
+try:
+    print('ROC AUC Score:', roc_auc_score(actual, predicted))
+except ValueError as e:
+    print(e)
+
 
 # CHATBOT FUNCTIONS
 def chatbot_respone(text):
