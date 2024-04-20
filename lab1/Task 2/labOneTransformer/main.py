@@ -12,8 +12,11 @@ import math
 
 nltk.download('punkt')
 
-# Load data
-data = pd.read_csv('amazon_cells_labelled.txt', sep='\t', names=['review', 'label'])
+# load and prepare data uncomment your line and keep comment the other ones.
+
+#data = pd.read_csv('amazon_cells_labelled.txt', sep='\t', names=['review', 'label'])  #Nabez esecution 
+data = pd.read_csv(r'C:\Users\39393\Desktop\UNIPD\ERASMUS+\DEEP LEARNING\d7047e\lab1\Task 1\amazon_cells_labelled.txt', sep='\t', names=['review', 'label'])  #Francesco esecution
+
 
 # Tokenization
 data['tokens'] = data['review'].apply(word_tokenize)
@@ -124,14 +127,14 @@ d_model = 32  # embedding dimension
 nhead = 8  # number of heads in the multiheadattention models
 nhid = 256  # dimension of the feedforward network model
 nlayers = 2  # number of nn.TransformerEncoderLayer
-dropout = 0.2  # dropout rate
+dropout = 0.3  # dropout rate
 
 model = TransformerModel(ntokens, d_model, nhead, nhid, nlayers, dropout).to(device)
 criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=0.001,betas=(0.85,0.9), eps = 1e-7, weight_decay = 1e-4)
 
 # Number of epochs
-num_epochs = 20
+num_epochs = 100
 
 for epoch in range(num_epochs):
     train_loss, train_acc = train(model, train_loader, criterion, optimizer, device)
