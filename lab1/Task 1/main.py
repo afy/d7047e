@@ -13,8 +13,8 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 # PREPROCESS
 # load and prepare data uncomment your line and keep comment the other ones.
 
-#data = pd.read_csv('amazon_cells_labelled.txt', sep='\t', names=['review', 'label'])  #Nabez esecution 
-data = pd.read_csv(r'C:\Users\39393\Desktop\UNIPD\ERASMUS+\DEEP LEARNING\d7047e\lab1\Task 1\amazon_cells_labelled.txt', sep='\t', names=['review', 'label'])  #Francesco esecution
+data = pd.read_csv('amazon_cells_labelled.txt', sep='\t', names=['review', 'label'])  #Nabez esecution
+#data = pd.read_csv(r'C:\Users\39393\Desktop\UNIPD\ERASMUS+\DEEP LEARNING\d7047e\lab1\Task 1\amazon_cells_labelled.txt', sep='\t', names=['review', 'label'])  #Francesco esecution
 
 # checking how many pos and neg reviews
 review_counts = data['label'].value_counts()
