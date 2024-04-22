@@ -1,0 +1,89 @@
+Comparing the performance of the two models:
+
+Simple ANN:
+Test Accuracy: 76.5%
+Precision for class 0 (negative sentiment): 72%
+Precision for class 1 (positive sentiment): 81%
+Recall for class 0: 81%
+Recall for class 1: 73%
+F1-score: 77%
+Confusion Matrix:
+[[75 18]
+ [29 78]]
+ROC AUC Score: 0.7677
+
+Transformer:
+Validation Accuracy: 73.5%
+Precision for class 0: 66%
+Precision for class 1: 85%
+Recall for class 0: 87%
+Recall for class 1: 62%
+F1-score: 73%
+Confusion Matrix:
+[[81 12]
+ [41 66]]
+
+Comparing the two models, we can observe that the Simple ANN achieves a slightly higher accuracy and better precision and recall for both classes compared to the Transformer model. However, the Transformer model still performs reasonably well, with a good overall accuracy and balanced precision and recall scores for both classes.
+
+When to prefer one model over the other:
+
+Simple ANN:
+- Use when the dataset is relatively small and can be easily handled by a traditional neural network.
+- Suitable for tasks where the input features have a simple relationship with the output.
+- Can be trained efficiently and quickly on smaller datasets.
+- May work well for tasks where the data has linear or simple non-linear relationships.
+
+Transformer:
+- Prefer when dealing with sequential data like text or time series where capturing long-range dependencies is important.
+- Ideal for tasks where the relationships between input and output are complex and require capturing contextual information.
+- Works well with large datasets due to its self-attention mechanism, which can capture long-range dependencies efficiently.
+- May require more computational resources for training compared to simple ANN due to the complexity of the architecture.
+
+In summary, the choice between the Simple ANN and Transformer models depends on the nature of the dataset, the complexity of the task, and the computational resources available. For tasks involving sequential data and complex relationships, the Transformer model might be preferred despite its slightly lower performance in this specific scenario. However, for simpler tasks or smaller datasets, the Simple ANN may suffice and offer better computational efficiency.
+
+
+
+Q2:
+The two models differ in terms of complexity, accuracy, and efficiency, and their performance varies depending on the specific scenario or task:
+
+Complexity:
+- Simple ANN: Generally has a simpler architecture consisting of input, hidden, and output layers. It relies on fully connected layers and activation functions to learn the mapping between input and output.
+- Transformer: More complex architecture, especially due to its self-attention mechanism. It consists of multiple layers of self-attention and feed-forward neural networks, allowing it to capture long-range dependencies in sequential data effectively.
+Accuracy:
+- Simple ANN: Achieved higher accuracy in the provided example, with a test accuracy of 76.5% compared to the Transformer's validation accuracy of 73.5%.
+Transformer: Slightly lower accuracy compared to the Simple ANN in this specific scenario.
+Efficiency:
+- Simple ANN: Generally more computationally efficient, especially for smaller datasets and simpler tasks. Training and inference time are usually shorter compared to more complex architectures like the Transformer.
+- Transformer: Requires more computational resources due to its complex architecture and the need to process each token in the input sequence independently. Training and inference may take longer, especially with larger datasets.
+
+One model may outperform the other in specific scenarios or tasks based on the following factors:
+
+- Nature of the Data: If the data has simple relationships between input and output or does not require capturing long-range dependencies, the Simple ANN may outperform the - - Transformer due to its simplicity and efficiency.
+- Sequential Data: For tasks involving sequential data like text classification or language translation, where capturing contextual information and long-range dependencies is crucial, the Transformer may outperform the Simple ANN due to its self-attention mechanism.
+- Computational Resources: If computational resources are limited, the Simple ANN may be preferred due to its lower computational complexity and efficiency.
+
+
+In summary, the choice between the two models depends on the specific requirements of the task, the nature of the data, and the available computational resources. While the Simple ANN may offer higher accuracy and efficiency for simpler tasks, the Transformer excels in handling sequential data and capturing complex relationships in larger datasets despite its higher computational cost.
+
+
+Q3:
+
+Based on the provided results and observations:
+
+Data Amount to Train:
+- Both models were trained on the same dataset, likely with a relatively small amount of training data. This is evident from the moderate performance of both models, as indicated by their accuracy metrics.
+- Increasing the amount of training data could potentially improve the performance of both models by allowing them to learn more representative patterns and generalize better to unseen data.
+
+Embeddings Utilized:
+- In the Simple ANN, embeddings were likely not explicitly utilized, as the model architecture typically consists of fully connected layers that directly operate on the input features.
+- In contrast, the Transformer model utilized embeddings extensively. The input tokens were embedded into dense vectors using an embedding layer, and positional encoding was applied to encode the position of each token in the sequence. This embedding mechanism enables the model to capture semantic information and positional relationships between tokens effectively.
+
+Architectural Choices:
+- Simple ANN: The architecture consists of fully connected layers with activation functions (e.g., ReLU) between them. This architecture is suitable for capturing simple patterns in the data but may struggle with capturing long-range dependencies in sequential data.
+- Transformer: The architecture incorporates self-attention mechanisms, which allow the model to attend to different parts of the input sequence when making predictions. This architecture is well-suited for sequential data processing tasks, as it can effectively capture long-range dependencies and contextual information.
+
+
+Overall, insights regarding the data amount to train, embeddings utilized, and architectural choices made suggest that:
+
+- Increasing the amount of training data could potentially benefit both models.
+- The Transformer model's architectural choices, such as self-attention mechanisms and positional encodings, make it more suitable for processing sequential data like text compared to the Simple ANN.
