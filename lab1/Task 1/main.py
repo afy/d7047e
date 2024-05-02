@@ -73,7 +73,6 @@ for epoch in range(30):
     print(f'Epoch {epoch+1}: Training Loss = {loss.item()}')
 
 # TEST MODEL
-# TEST MODEL
 correct = 0
 total = 0
 predicted = []
@@ -90,11 +89,6 @@ with torch.no_grad():
 print('Test Accuracy:', accuracy_score(actual, predicted)*100)
 print('Classification Report:\n', classification_report(actual, predicted))
 print('Confusion Matrix:\n', confusion_matrix(actual, predicted))
-try:
-    print('ROC AUC Score:', roc_auc_score(actual, predicted))
-except ValueError as e:
-    print(e)
-
 
 # CHATBOT FUNCTIONS
 def chatbot_respone(text):
@@ -111,7 +105,7 @@ while True:
     if user_input.lower() == 'quit':
         break
     response = chatbot_respone(user_input)
-    print(f'The sentiment of the review is: {response}')
+    print(response)
     
 
 
