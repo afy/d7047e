@@ -140,3 +140,4 @@ ui-tests/.pnp.*
 # Additional
 # Do no include data directories from pytorch downloads
 data/
+trained/
