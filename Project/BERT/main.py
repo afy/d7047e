@@ -1,3 +1,11 @@
+# HELLO WHOEVER READS THIS
+# This file should be considered legacy, really no reason to use it over the jupyter file in the same dir
+# UNLESS that one doesn't run. No code has been changed tho
+
+import pandas as pd
+pd.read_csv(r'OLID_Tain.txt')
+
+
 import numpy as np
 import pandas as pd
 import torch
@@ -9,7 +17,7 @@ import re
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc, f1_score
 # Load the dataset
-df = pd.read_csv('OLID_Tain.txt', delimiter='\t', skiprows=1, names=['id', 'tweet', 'subtask_a', 'label2', 'label3']) # Nebos line
+df = pd.read_csv('../OLID_Tain.txt', delimiter='\t', skiprows=1, names=['id', 'tweet', 'subtask_a', 'label2', 'label3']) # Nebos line
 
 
 
