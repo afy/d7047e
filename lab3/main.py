@@ -442,5 +442,5 @@ if __name__ == '__main__':
     if load_model:
         load_checkpoint(torch.load('my_checkpoint.pth.tar'))
 
-    train_and_validate(model, train_loader, val_loader, optimizer, criterion, num_epochs, device)
+    #train_and_validate(model, train_loader, val_loader, optimizer, criterion, num_epochs, device)
     test_model(model, test_loader, full_dataset.vocab)
