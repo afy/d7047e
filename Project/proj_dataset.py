@@ -11,28 +11,16 @@ from sklearn.model_selection import train_test_split
 # te: OLID, HASOC
 
 FOLDERSPATH = r'datasets'
+SOLID_HARDLINECAP = 100_000
 
-def _clean_tweet(tweet):
-    tweet += " "
-    #tweet = re.sub(r"@[A-Za-z0-9]+", ' ', tweet)  # Remove @ mentions
-    tweet = re.sub(r'\@(.*?)\s', '@USER ', tweet) # Replace @ mentions -> @USER
-    tweet = re.sub(r"https?://[A-Za-z0-9./]+", ' ', tweet)  # Remove URLs
-    tweet = re.sub(r"[^a-zA-Z.!?']", ' ', tweet)  # Only keep text characters
-    tweet = re.sub(r" +", ' ', tweet)  # Remove multiple spaces
-    return tweet.strip()
 
-def _load_set(data, off_token="OFF", load_solid=False, cutoff=0.2):
-    if not load_solid: #OLID/HASOC
-        for index, row in data.iterrows():
-            if row['label1'] == off_token:
-                data.at[index, 'label1'] = 0 
-            else:
-                data.at[index, 'label1'] = 1
-    else:
-        for index, row in data.iterrows():
-            data.at[index, 'label1'] = 1 if float(row['label1']) < cutoff else 0
-        data['label1'] = data['label1'].astype(int)
-            
+import warnings
+warnings.warn("Disabling panda dataframe warnings, to enable comment out lines below")
+from pandas.errors import SettingWithCopyWarning
+warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
+
+
+def _load_set(data):        
     #review_counts = data['label1'].value_counts()
     #print(f'Count of reviews by sentiment: {review_counts}')
     data['tokens'] = data['sentence'].apply(word_tokenize)
@@ -44,10 +32,22 @@ def _load_set(data, off_token="OFF", load_solid=False, cutoff=0.2):
     labels = torch.tensor(data['label1'].tolist())
     return TensorDataset(features, labels), vocab
 
+
+def _clean_tweet(tweet):
+    tweet += " "
+    #tweet = re.sub(r"@[A-Za-z0-9]+", ' ', tweet)  # Remove @ mentions
+    tweet = re.sub(r'\@(.*?)\s', '@USER ', tweet) # Replace @ mentions -> @USER
+    tweet = re.sub(r"https?://[A-Za-z0-9./]+", ' ', tweet)  # Remove URLs
+    tweet = re.sub(r"[^a-zA-Z.!?']", ' ', tweet)  # Only keep text characters
+    tweet = re.sub(r" +", ' ', tweet)  # Remove multiple spaces
+    return tweet.strip()
+
+
 def _preprocess(df):
     for index, row in df.iterrows():
         df.at[index, 'sentence'] = _clean_tweet(row["sentence"])
     return df
+
 
 def _load_olid_test_set():
     olid_path = FOLDERSPATH + r'\\OLID\\OLID_Tain.txt'
@@ -55,14 +55,27 @@ def _load_olid_test_set():
     data = data.drop(axis=1, labels = ['id','label2','label3'])
     data = data.drop(axis=0, index=0)
     print(f"Loaded {data.shape[0]} lines from {olid_path}")
+    for index, row in data.iterrows():
+        if row['label1'] == "OFF":
+            data.at[index, 'label1'] = 0 
+        else:
+            data.at[index, 'label1'] = 1
     return data
+
 
 def _load_ds2_file(hasoc_path, path):
     data = pd.read_csv(hasoc_path + path, sep='\t', names=['id','sentence', 'label1','label2', 'label3'])
     data = data.drop(index=0, axis=0)
     data = data.drop(columns=['id','label2','label3'], axis=1)
+    for index, row in data.iterrows():
+        if row['label1'] == "HOF":
+            data.at[index, 'label1'] = 0 
+        else:
+            data.at[index, 'label1'] = 1
+    data['label1'] = data['label1'].astype(int)
     print(f"Loaded {data.shape[0]} lines from {path}")
     return data
+
 
 def _load_hasoc_test_set():
     fp = FOLDERSPATH + r'\\HASOCData\\'
@@ -71,41 +84,56 @@ def _load_hasoc_test_set():
     data = pd.concat([_load_ds2_file(fp, file1), _load_ds2_file(fp, file2)])
     return _preprocess(data)
 
-def _load_ds3_file(fp, path, nrows):
+
+def _load_ds3_file(fp, path, nrows, capsize):
     data = pd.read_excel(
-        fp + r'task_a_part' + path + r'.xlsx', 
-        names=['id','sentence','label1','label2'],
+        fp + path, 
+        names=['sentence','label1'],
         nrows=nrows
     )
-    print(f"Loaded {data.shape[0]} lines from {path}")
+    print(f"Loaded {data.shape[0]} lines from {path} to ensure sufficient randomness, cap: {capsize}")
+    data = data.sample(frac=1)
+    data = data[:nrows]
     return data
 
-def _load_solid_set(size):
+
+def _load_solid_set(size, tr_split_perc):
     solid_path = FOLDERSPATH + r'\\OffenseEval\\'
-    if size> 1_300_000:
-        data = _load_ds3_file(solid_path, "1")
-        for i in range(2,2):
-            data = pd.concat([data, _load_ds3_file(solid_path, str(i))])
-    else:
-        data = _load_ds3_file(solid_path, "1", nrows=size)
-    data = data.drop(columns=['id'], axis=1)
-    data = data.dropna(axis=0) # remove rows containing NaN 
-    data = data[:size]
-    return data
+    file_off = r'file_off.xlsx'
+    file_not = r'file_not.xlsx'
+
+    size = size//2
+    assert size < 150_000, "Maximum size exceeded for size argument (SOLID loader)"
+
+    d_off = _load_ds3_file(
+            solid_path, 
+            file_off, 
+            nrows=SOLID_HARDLINECAP, 
+            capsize=size)
+
+    d_not = _load_ds3_file(
+            solid_path, 
+            file_not, 
+            nrows=SOLID_HARDLINECAP, 
+            capsize=size)
+  
+    p = int(tr_split_perc*len(d_not))
+    tr_off, tr_not  = d_off.iloc[p:, :], d_not.iloc[p:, :]
+    vl_off, vl_not  = d_off.iloc[:p, :], d_not.iloc[:p, :]
+    tr = pd.concat([tr_off, tr_not]).sample(frac=1)
+    vl = pd.concat([vl_off, vl_not]).sample(frac=1)
+    return tr, vl
+
 
 def get_loaders(train_size = 40_000, tr_split_percentage = 0.8, batch_size = 32, cutoff=0.2):
     olid = _load_olid_test_set()
     hasoc = _load_hasoc_test_set()
-    solid = _load_solid_set(train_size)
-
-    p = int(tr_split_percentage * solid.shape[0])
-    solid_tr = solid.loc[:p,]
-    solid_vl = solid.loc[p:,]
+    solid_tr, solid_vl = _load_solid_set(train_size, tr_split_percentage)
 
     nltk.download('punkt')
-    tr_set, vt = _load_set(solid_tr, load_solid=True, cutoff=cutoff)
-    vl_set, vv = _load_set(solid_vl, load_solid=True, cutoff=cutoff)
-    te1_set, vt1 = _load_set(hasoc, off_token="HOF")
+    tr_set, vt = _load_set(solid_tr)
+    vl_set, vv = _load_set(solid_vl)
+    te1_set, vt1 = _load_set(hasoc)
     te2_set, vt2 = _load_set(olid)
 
     train_loader = DataLoader(tr_set, batch_size=batch_size, shuffle=True)
