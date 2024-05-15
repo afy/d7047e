@@ -93,7 +93,7 @@ def _load_ds3_file(fp, path, nrows, capsize):
     )
     print(f"Loaded {data.shape[0]} lines from {path} to ensure sufficient randomness, cap: {capsize}")
     data = data.sample(frac=1)
-    data = data[:nrows]
+    data = data[:capsize]
     return data
 
 
@@ -117,15 +117,16 @@ def _load_solid_set(size, tr_split_perc):
             nrows=SOLID_HARDLINECAP, 
             capsize=size)
   
-    p = int(tr_split_perc*len(d_not))
-    tr_off, tr_not  = d_off.iloc[p:, :], d_not.iloc[p:, :]
-    vl_off, vl_not  = d_off.iloc[:p, :], d_not.iloc[:p, :]
+    p = int(tr_split_perc*size)
+    tr_off, tr_not  = d_off.iloc[:p, :], d_not.iloc[:p, :]
+    vl_off, vl_not  = d_off.iloc[p:, :], d_not.iloc[p:, :]
+
     tr = pd.concat([tr_off, tr_not]).sample(frac=1)
     vl = pd.concat([vl_off, vl_not]).sample(frac=1)
     return tr, vl
 
 
-def get_loaders(train_size = 40_000, tr_split_percentage = 0.8, batch_size = 32, cutoff=0.2):
+def get_loaders(train_size = 40_000, tr_split_percentage = 0.8, batch_size = 32):
     olid = _load_olid_test_set()
     hasoc = _load_hasoc_test_set()
     solid_tr, solid_vl = _load_solid_set(train_size, tr_split_percentage)
