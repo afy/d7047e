@@ -44,6 +44,9 @@ from torch import optim
 from nltk.translate.bleu_score import corpus_bleu
 import matplotlib.pyplot as plt
 
+from nltk.translate.meteor_score import meteor_score
+from rouge import Rouge
+
 
 # Custom Dataset for text
 '''
@@ -246,8 +249,8 @@ class CNNtoRNN(nn.Module):
 
                 x = self.decoderRNN.embed(predicted).unsqueeze(0)
 
-                final_caption = ' '.join(result_caption[:-1] if result_caption[-1] == "<EOS>" else result_caption)
-
+                final_caption = ' '.join(result_caption)
+                final_caption = final_caption.replace('<SOS>', '')
 
             return final_caption
 
@@ -297,12 +300,12 @@ def load_checkpoint(checkpoint):
     model.load_state_dict(checkpoint['state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer'])
 
-def show_images(images, vocab, captions, generated_captions):
+def show_images(images, vocab, captions):
     plt.figure(figsize=(15, 3))
     for i, img in enumerate(images):
         plt.subplot(1, len(images), i+1)
         plt.imshow(img.cpu().permute(1, 2, 0).numpy())
-        plt.title("Caption:\n" + ' '.join([vocab.itos[idx] for idx in captions[i] if idx not in {vocab.stoi['<PAD>'], vocab.stoi['<SOS>'], vocab.stoi['<EOS>']}]))
+        plt.title(captions)
         plt.axis('off')
     plt.show()
 
@@ -359,39 +362,40 @@ def test_model(model, test_loader, vocabulary):
     references = []
     hypotheses = []
 
-    # No gradient needed
     with torch.no_grad():
         for images, all_captions in test_loader:
             images = images.to(device)
             all_captions = all_captions.to(device)
 
-            # Debugging: Check dimensions
-            #print(f"Number of images in batch: {images.size(0)}")
-            #print(f"Dimensions of all_captions tensor: {all_captions.size()}")
-
-            for i in range(images.size(0)):
+            for i in range(images.size(0)):  # Loop through each image in the batch
                 image = images[i]
-                # Generate caption using the provided model method
                 hypothesis = model.caption_image(image, vocabulary)
-                hypotheses.append(hypothesis.split())
+                # Split the generated caption into tokens and make sure it's a list of strings
+                hypothesis_tokens = hypothesis.split()
+                hypotheses.append(hypothesis_tokens)  # Directly append the list of tokens
 
-                # Retrieve actual captions for each image
+                # Retrieve the corresponding captions for the current image
+                image_captions = all_captions[:, i]  # Select the ith column for all caption sequences
                 image_references = []
-                for j in range(all_captions.size(0)):  # This should iterate over all captions
-                    idx = all_captions[j, i].item()  # Get the index of the word
-                    if idx not in {vocabulary.stoi["<SOS>"], vocabulary.stoi["<EOS>"], vocabulary.stoi["<PAD>"]}:
-                        word = vocabulary.itos[idx]
+
+                for idx in image_captions:
+                    if idx.item() not in {vocabulary.stoi["<SOS>"], vocabulary.stoi["<EOS>"], vocabulary.stoi["<PAD>"]}:
+                        word = vocabulary.itos[idx.item()]
                         image_references.append(word)
-                references.append(image_references)
 
-            # Optionally show some images with ground truth captions
-                #if i == 5:
-                #    show_images(images[:5], vocabulary, all_captions[:5], hypotheses[:5])
+                references.append([' '.join(image_references).split()])  # A list containing a single list of words
 
-        # Compute BLEU-4 scores
-        bleu_score = corpus_bleu(references, hypotheses)
-        print(f"BLEU-4 score on the test set: {bleu_score:.4f}")
+                if i < 1:  # Print for the first image only for checking
+                    print(f"Generated Caption: {' '.join(hypothesis_tokens)}")
+                    print(f"Reference Captions: {' '.join(image_references)}")
 
+        # Compute BLEU scores or other metrics outside the loop
+        bleu_score = corpus_bleu(references, hypotheses, weights=(1,0,0,0))
+        print(f"BLEU score on the test set: {bleu_score:.4f}")
+'''
+ BLEU might not perfectly capture the quality of image captions if the generated text deviates in structure from the 
+ reference but still correctly describes the image. Consider using other metrics like METEOR, ROUGE, 
+'''
 
 
 if __name__ == '__main__':
@@ -425,12 +429,13 @@ if __name__ == '__main__':
     print(vocab_size)
     num_layers = 1
     learning_rate = 0.001
-    num_epochs = 20
+    num_epochs = 4
     batch_size = 32
     load_model = True
 
     # Setup device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Using device: {device}')
 
     # Model setup
     model = CNNtoRNN(embed_size, hidden_size, vocab_size, num_layers).to(device)
